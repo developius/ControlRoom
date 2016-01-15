@@ -5,6 +5,8 @@ import random
 
 class ControlRoom:
     def __init__(self, mc):
+        """ pass me your minecraft.Minecraft.create() object please! """
+        
         self.mc = mc
         self.autojump = False
         self.worldImmutable = False
@@ -15,21 +17,29 @@ class ControlRoom:
         self.mc.setting("nametags_visible", self.nametags)
 
     def toggleAutoJump(self):
+        """ toggle auto jump setting """
+        
         self.autojump = not self.autojump
         self.mc.setting("autojump", self.autojump)
         return(self.autojump)
     
     def toggleWorldImmutable(self):
+        """ toggle world immutable setting """
+        
         self.worldImmutable = not self.worldImmutable
         self.mc.setting("world_immutable", self.worldImmutable)
         return(self.worldImmutable)
 
     def toggleNametags(self):
+        """ toggle nametag visibility """
+        
         self.nametags = not self.nametags
         self.mc.setting("nametags_visible", False)
         return(self.nametags)
         
-    def tree(self, x, y, z, wood = block.LEAVES.id, leaves = block.LEAVES.id):        
+    def tree(self, x, y, z, wood = block.LEAVES.id, leaves = block.LEAVES.id):
+        """ make a tree at x, y, z with optionally specified wood and leaves """
+        
         self.mc.setBlocks(x,y,z, x,y+6,z, wood)
         self.mc.setBlocks(x+2,y+4,z+2, x-2,y+5,z-2, leaves)
         
@@ -51,10 +61,16 @@ class ControlRoom:
 
         self.mc.setBlock(x,y+8,z, leaves)
 
-    def waterWall(self, x, y, z, length = 2):
-        self.mc.setBlocks(x - (length/2), y, z, x, y, z + (length/2), block.WATER_FLOWING.id)
+    def flowingWall(self, x, y, z, length = 2, height = 4, threat = "water"):
+        """ make a flowing wall of either lava or water """
+        
+        if threat == "water": b = block.WATER_FLOWING.id
+        if threat == "lava": b = block.LAVA_FLOWING.id
+        self.mc.setBlocks(x - (length/2), y, z, x, y + height, z + (length/2), b)
 
     def groundLevel(self, x, z):
+        """ find out where ground level is at x, z """
+        
         y = -5 # 5 below sea level
         ground = False
         while not ground:
@@ -66,6 +82,8 @@ class ControlRoom:
         return(y) # return the current y value
 
     def distance(self, x1, y1, z1, x2, y2, z2, height = False):
+        """ calculate the distance between two points, optionally including height """
+        
         xd = x1 - x2
         zd = z1 - z2
         if (height):
@@ -76,6 +94,8 @@ class ControlRoom:
         return(d)
     
     def randomCoordinates(self):
+        """ generate some random coordinates at ground level """
+        
         x = random.randint(-128, 128)
         z = random.randint(-128, 128)
         y = self.groundLevel(x, z)
@@ -85,6 +105,8 @@ class ControlRoom:
                 }
     
     def chase(self, wood = block.WOOD.id, leaves = block.LEAVES.id, randomplayer = False, player = None, threat="tree"):
+        """ chase a player with the specified threat """
+        
         start = time.time()
         if randomplayer:
             player = random.choice(self.mc.getPlayerEntityIds())
@@ -92,11 +114,11 @@ class ControlRoom:
             player = self.mc.getPlayerEntityIds()[0]
         pos = self.mc.entity.getPos(player)
         origin = self.randomCoordinates()
-        if threat == "tree":
+        if threat == "trees":
             self.tree(origin['x'], origin['y'], origin['z'], wood, leaves)
             increment = 5
         else:
-            self.waterWall(origin['x'], origin['y'], origin['z'], length = 5)
+            self.flowingWall(origin['x'], origin['y'], origin['z'], length = 5, threat=threat)
             increment = 1
 
         distance = self.distance(pos.x, pos.y, pos.z, origin['x'], origin['y'], origin['z'])
@@ -111,16 +133,19 @@ class ControlRoom:
             currentY = self.groundLevel(currentX, currentZ)
             distance = self.distance(pos.x, pos.y, pos.z, currentX, currentY, currentZ)
             print(distance)
-            if (self.mc.getBlock(currentX, currentY-1, currentZ) != leaves):
-                if threat == "tree":
+            b = self.mc.getBlock(currentX, currentY-1, currentZ)
+            if (b != leaves):
+                if threat == "trees":
                     self.tree(currentX, currentY, currentZ, wood, leaves)
                 else:
-                    self.waterWall(currentX, currentY+5, currentZ, length = 5)
+                    self.flowingWall(currentX, currentY, currentZ, length = 5, threat=threat)
             time.sleep(0.5)
         duration = time.time() - start
         return(duration)
             
     def console(self):
+        """ opens a console for interfacing with the ControlRoom """
+        
         command = raw_input("> ")
         while command != "Q":
             if (command == "chase"):
