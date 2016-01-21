@@ -1,4 +1,5 @@
 import mcpi.block as block
+from mcpi.minecraft import Vec3 as Vec3
 import time
 import math
 import random
@@ -160,3 +161,14 @@ class ControlRoom:
             if (command == "nametags"):
                 print("Nametags are now " + ("visible" if self.toggleNametags() else "invisble"))
             command = raw_input("> ")
+
+    def circlePath(self, ox, oy, oz, r):
+        """ returns a circle path for the circle specified """
+
+        circlePath = {"coords": []}
+        for i in range(0,361):
+            ri = math.radians(i)
+            x = ox + r * math.cos(ri)
+            z = oz + r * math.sin(ri)
+            circlePath['coords'].append(Vec3(x,oy,z))
+        return(circlePath)
